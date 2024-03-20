@@ -6,8 +6,8 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
-using UnityEditor.SearchService;
-using UnityEditor.Sprites;
+//using UnityEditor.SearchService;
+//using UnityEditor.Sprites;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.PlayerLoop;
@@ -55,6 +55,8 @@ public class PosPacket : BasePacket
     }
 
     public int          id;
+    public float        horizontal;
+    public float        vertical;
     public Vector3      pos;
     public Quaternion   rot;
 };
@@ -119,7 +121,6 @@ public class NetWork_manager : MonoBehaviour
     public int m_port = 12345;
 
     public GameObject playerPrefab;
-    GameObject otherObject;
 
     [HideInInspector]
     public TcpClient m_tcpClient;
@@ -133,6 +134,7 @@ public class NetWork_manager : MonoBehaviour
     [HideInInspector]
     public Dictionary<int, GameObject> m_playerList = new Dictionary<int, GameObject>();
 
+    PlayerAnimator otherPlayerAni;
 
     // Start is called before the first frame update
     void Start()
@@ -249,7 +251,7 @@ public class NetWork_manager : MonoBehaviour
         //    SendData( packet );
         //}
 
-            if (m_msgQueue.Count > 0)
+        if (m_msgQueue.Count > 0)
         {
             var basePack = m_msgQueue.Dequeue();
 
@@ -275,14 +277,21 @@ public class NetWork_manager : MonoBehaviour
                                 var player = Instantiate(playerPrefab);
                             
                                 player.name = "Player" + getPack.id;
-
                                 m_playerList.Add(getPack.id, player);
+
+                                otherPlayerAni = player.GetComponent<PlayerAnimator>();
                             }
 
                             if (getPack.id != m_myID)
                             {
                                 m_playerList[getPack.id].transform.position = getPack.pos;
                                 m_playerList[getPack.id].transform.rotation = getPack.rot;
+                                print(getPack.horizontal);
+                                print(getPack.vertical);
+
+
+                                // 애니메이션 무빙 애니메이션
+                                otherPlayerAni.OnMovement(getPack.horizontal, getPack.vertical);
                             }
                         }
                     }

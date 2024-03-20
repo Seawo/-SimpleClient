@@ -320,7 +320,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8509a3b6d07fbd04b9b0ac095daec027, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  charater_nicName: test
+  charater_nicName: "\uC0C8\uC2F9\uC2DC\uD504"
   charaterNameMesh: {fileID: 0}
 --- !u!4 &1004734283
 Transform:

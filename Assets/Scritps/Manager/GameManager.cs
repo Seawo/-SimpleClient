@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
@@ -25,6 +26,8 @@ public class GameManager : MonoBehaviour
 
     PosPacket pos_packet;
 
+    PlayerMovement playerMovement;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -43,6 +46,8 @@ public class GameManager : MonoBehaviour
         pos_packet.id = network_manager.m_myID;
         print("packet id : " + pos_packet.id);
         network_manager.m_playerList.Add(pos_packet.id, player);
+
+        playerMovement = m_myObject.GetComponent<PlayerMovement>();
     }
 
     float tick = 0;
@@ -56,12 +61,22 @@ public class GameManager : MonoBehaviour
 
             PosPacket pos_packet = new PosPacket();
             pos_packet.id = network_manager.m_myID;
-
             pos_packet.pos = m_myObject.transform.position;
             pos_packet.rot = m_myObject.transform.rotation;
 
+            pos_packet.horizontal = playerMovement.x;
+            pos_packet.vertical = playerMovement.z;
+
             network_manager.SendData(pos_packet);
             tick = 0.1f;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (network_manager.m_tcpClient != null)
+        {
+            network_manager.m_tcpClient.Close();
         }
     }
 }

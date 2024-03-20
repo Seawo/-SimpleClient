@@ -4,7 +4,22 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    private static PlayerMovement instance;
+    public static PlayerMovement GetInstance() 
+    {
+        if (instance == null)
+        {
+            instance = new PlayerMovement();
+        }
+        return instance; 
+    }
+
     public CharacterController controller;
+
+    [HideInInspector]
+    public float x;
+    [HideInInspector]
+    public float z;
 
     public float speed = 3;
     public float gravity = -9.18f;
@@ -46,8 +61,8 @@ public class PlayerMovement : MonoBehaviour
             speed = 3;
         }
 
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
+        x = Input.GetAxis("Horizontal");
+        z = Input.GetAxis("Vertical");
 
         playerAnimator.OnMovement(x, z);
 
