@@ -286,9 +286,6 @@ public class NetWork_manager : MonoBehaviour
                             {
                                 m_playerList[getPack.id].transform.position = getPack.pos;
                                 m_playerList[getPack.id].transform.rotation = getPack.rot;
-                                print(getPack.horizontal);
-                                print(getPack.vertical);
-
 
                                 // 애니메이션 무빙 애니메이션
                                 otherPlayerAni.OnMovement(getPack.horizontal, getPack.vertical);
