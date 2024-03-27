@@ -18,6 +18,7 @@ public class PlayerAnimator : MonoBehaviour
 
     public void OnJump()
     {
-       // 점프 애니메이션 
+        // 점프 애니메이션
+        p_Animator.SetTrigger("onjump");
     }
 }
