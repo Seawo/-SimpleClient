@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -10,7 +11,10 @@ public class Enemy : MonoBehaviour
         Idle,
         Sleep,
         Walk,
+        Run,
+        IdleCombat,
         Death,
+        
         GetHit,
         Attack1,
         Attack2,
@@ -42,6 +46,10 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
+        
+
+
+        //test animation
         if (isState == true)
         {
             
@@ -55,25 +63,40 @@ public class Enemy : MonoBehaviour
             }
             else if (Input.GetKeyUp(KeyCode.F3))
             {
-                StartCoroutine(SetAnimationState(AniState.Death));
+                StartCoroutine(SetAnimationState(AniState.Run));
             }
             else if (Input.GetKeyUp(KeyCode.F4))
             {
-                StartCoroutine(SetAnimationState(AniState.GetHit));
+                StartCoroutine(SetAnimationState(AniState.IdleCombat));
+                
             }
             else if (Input.GetKeyUp(KeyCode.F5))
             {
-                StartCoroutine(SetAnimationState(AniState.Attack1));
+                StartCoroutine(SetAnimationState(AniState.Death));
             }
+
+
             else if (Input.GetKeyUp(KeyCode.F6))
             {
-                StartCoroutine(SetAnimationState(AniState.Attack2));    
+                StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             }
             else if (Input.GetKeyUp(KeyCode.F7))
             {
-                StartCoroutine(SetAnimationState(AniState.Buff));
+                StartCoroutine(SetAnimationTrigger(AniState.Attack1));
+
+            }
+            else if (Input.GetKeyUp(KeyCode.F8))
+            {
+                StartCoroutine(SetAnimationTrigger(AniState.Attack2));
+
+            }
+            else if (Input.GetKeyUp(KeyCode.F9))
+            {
+                StartCoroutine(SetAnimationTrigger(AniState.Buff));
+
             }
         }
+        
     }
 
     IEnumerator SetAnimationState(AniState state)
@@ -83,8 +106,20 @@ public class Enemy : MonoBehaviour
         aniStateValue = (int)state;
         animator.SetInteger("AniState", aniStateValue);
         yield return new WaitForSeconds(0.3f);
+        
         isState = true;
     }
+
+    IEnumerator SetAnimationTrigger(AniState state)
+    {
+        isState = false;
+        // AniState 열거형 멤버를 정수 값으로 변환하여 전달
+        Debug.Log(state.ToString());
+        animator.SetTrigger("do" + state.ToString());
+        yield return new WaitForSeconds(0.3f);
+        isState = true;
+    }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -100,6 +135,7 @@ public class Enemy : MonoBehaviour
    {
         curHealth -= 10.0f;
 
+        StartCoroutine(SetAnimationState(AniState.GetHit));
         meshRenderer.material.color = Color.red;
         yield return new WaitForSeconds(0.1f);
 
@@ -109,6 +145,7 @@ public class Enemy : MonoBehaviour
         }
         else if ( curHealth <= 0 ) 
         {
+            // 죽었을때.
             meshRenderer.material.color = Color.black;
         }
     }
