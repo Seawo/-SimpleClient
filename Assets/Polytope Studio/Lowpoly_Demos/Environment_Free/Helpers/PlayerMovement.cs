@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -78,6 +79,11 @@ public class PlayerMovement : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime; // 중력
         controller.Move(velocity * Time.deltaTime);
+
+        if(Input.GetMouseButtonDown(0))
+        {
+            playerAnimator.Attack();
+        }
 
     }
 }

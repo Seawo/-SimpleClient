@@ -46,9 +46,7 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
-        
-
-
+ 
         //test animation
         if (isState == true)
         {
@@ -99,6 +97,7 @@ public class Enemy : MonoBehaviour
         
     }
 
+    // 현재 상태 걷기, 뛰기, 전투 모드 등등 지속적인 상태 구분
     IEnumerator SetAnimationState(AniState state)
     {
         isState = false;
@@ -110,11 +109,12 @@ public class Enemy : MonoBehaviour
         isState = true;
     }
 
+    // 공격 패턴 애니메이션 다시 이전 애니메이션으로 돌아가는 부분 예를 들어 공격하고 전투모드로
     IEnumerator SetAnimationTrigger(AniState state)
     {
         isState = false;
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
-        Debug.Log(state.ToString());
+        //Debug.Log(state.ToString());
         animator.SetTrigger("do" + state.ToString());
         yield return new WaitForSeconds(0.3f);
         isState = true;
@@ -123,11 +123,11 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.name);
-        StartCoroutine(OnDamage());
-        if (other.tag == "Weapon")
+        Debug.Log("hit target : "+other.name);
+        if (other.name == "SwordCollier")
         {
-            //아직 미정
+            StartCoroutine(SetAnimationTrigger(AniState.GetHit));
+            StartCoroutine(OnDamage());
         }
     }
 
