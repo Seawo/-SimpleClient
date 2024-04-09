@@ -25,19 +25,20 @@ public class Enemy : MonoBehaviour
     public float curHealth = 0.0f;
 
     private Rigidbody rigid;
-    private BoxCollider boxCollider;
+    private BoxCollider bossCollider;
     public  SkinnedMeshRenderer meshRenderer;
     private Animator animator;
 
     public int aniStateValue = 0;
     
-
     private bool isState = true;
+    private bool isDead = false;
+
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody>();
-        boxCollider = GetComponent<BoxCollider>();
+        bossCollider = GetComponent<BoxCollider>();
         animator = GetComponent<Animator>();
         curHealth = maxHealth;
 
@@ -46,7 +47,6 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
- 
         //test animation
         if (isState == true)
         {
@@ -94,7 +94,6 @@ public class Enemy : MonoBehaviour
 
             }
         }
-        
     }
 
     // 현재 상태 걷기, 뛰기, 전투 모드 등등 지속적인 상태 구분
@@ -124,7 +123,7 @@ public class Enemy : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("hit target : "+other.name);
-        if (other.name == "SwordCollier")
+        if (other.name == "SwordCollier" || !isDead)
         {
             StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             StartCoroutine(OnDamage());
@@ -146,7 +145,17 @@ public class Enemy : MonoBehaviour
         else if ( curHealth <= 0 ) 
         {
             // 죽었을때.
-            meshRenderer.material.color = Color.black;
+            StartCoroutine(Die());
         }
+    }
+
+    IEnumerator Die()
+    {
+        meshRenderer.material.color = Color.black;
+        StartCoroutine(SetAnimationState(AniState.Death));
+        bossCollider.enabled = false;
+        yield return new WaitForSeconds(6f);
+        isDead = true;
+        Destroy(this.gameObject);
     }
 }

@@ -6,11 +6,10 @@ using UnityEngine;
 public class PlayerAnimator : MonoBehaviour
 {
     private Animator p_Animator;
-    public Collider swordCollider;
-    public Collider[] skillImpactColiider;
+    //public Collider[] skillImpactColiider;
 
     public GameObject swordCollider2;
-
+    public ParticleSystem swordParticleSystem;
 
     int hashAttackCount = Animator.StringToHash("attackCount");
     private void Awake()
@@ -43,18 +42,18 @@ public class PlayerAnimator : MonoBehaviour
         set => p_Animator.SetInteger(hashAttackCount, value);
     }
 
+    // sword 충돌박스 생성
     public void AttackCollision()
     {
         Debug.Log("attack");
         StartCoroutine(DisableCollider2(swordCollider2));
     }
 
-    IEnumerator DisableCollider2(GameObject collier)
+    IEnumerator DisableCollider2(GameObject sword)
     {
-
         //yield return new WaitForSeconds(0.1f);
-        collier.active = true;
-        yield return new WaitForSeconds(0.1f);
-        collier.active = false;
+        sword.active = true;
+        yield return new WaitForSeconds(0.3f);
+        sword.active = false;
     }
 }

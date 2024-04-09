@@ -84,6 +84,5 @@ public class PlayerMovement : MonoBehaviour
         {
             playerAnimator.Attack();
         }
-
     }
 }
