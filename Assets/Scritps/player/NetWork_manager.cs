@@ -6,6 +6,8 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using Unity.VisualScripting;
+
 //using UnityEditor.SearchService;
 //using UnityEditor.Sprites;
 using UnityEngine;
@@ -13,6 +15,7 @@ using UnityEngine.AI;
 using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
+using static OtherPlayerAnimator;
 
 
 enum GAME_PACKET
@@ -21,6 +24,7 @@ enum GAME_PACKET
     POS,
     EXIT_USER,
     LOGIN,
+    ANISTATE,
     TEST,
 };
 
@@ -88,7 +92,17 @@ public class LoginPacket : BasePacket
     //public string   userNum;
     // 비번??
 };
-
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class AniStatePacket : BasePacket
+{
+    public AniStatePacket()
+    {
+        packet_id = (ushort)GAME_PACKET.ANISTATE;
+        packet_len = (ushort)Marshal.SizeOf(typeof(AniStatePacket));
+    }
+    public int id;
+    public int checkAniNum;
+};
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class TestPacket : BasePacket
 {
@@ -134,7 +148,7 @@ public class NetWork_manager : MonoBehaviour
     [HideInInspector]
     public Dictionary<int, GameObject> m_playerList = new Dictionary<int, GameObject>();
 
-    PlayerAnimator otherPlayerAni;
+    OtherPlayerAnimator otherPlayerAni;
 
     // Start is called before the first frame update
     void Start()
@@ -218,6 +232,9 @@ public class NetWork_manager : MonoBehaviour
                         case GAME_PACKET.LOGIN:
                             m_msgQueue.Enqueue(ByteToObject<LoginPacket>(pack.ToArray()));
                             break;
+                        case GAME_PACKET.ANISTATE:
+                            m_msgQueue.Enqueue(ByteToObject<AniStatePacket>(pack.ToArray()));
+                            break;
                         case GAME_PACKET.TEST:
                             m_msgQueue.Enqueue(ByteToObject<TestPacket>(pack.ToArray()));
                             break;
@@ -279,16 +296,20 @@ public class NetWork_manager : MonoBehaviour
                                 player.name = "Player" + getPack.id;
                                 m_playerList.Add(getPack.id, player);
 
-                                otherPlayerAni = player.GetComponent<PlayerAnimator>();
+                                //otherPlayerAni = player.GetComponent<PlayerAnimator>();
                             }
-
                             if (getPack.id != m_myID)
                             {
                                 m_playerList[getPack.id].transform.position = getPack.pos;
                                 m_playerList[getPack.id].transform.rotation = getPack.rot;
 
                                 // 애니메이션 무빙 애니메이션
-                                otherPlayerAni.OnMovement(getPack.horizontal, getPack.vertical);
+                                //otherPlayerAni.OnMovement(getPack.horizontal, getPack.vertical);
+                                // 단점 : update로 위치와 회전값을 실시간으로 받으면서 애니메이션이 끊김 현상이 이러남
+                                // 해결방안 : 특정 애니메이션을 호출하는 형식을 채택
+                                // 1. 특정 Packet형태로 나의 현태 애미메이션 상태를 나타내는 packet을 전달할 예정
+                                 
+                                //otherPlayerAni.OnRun();
                             }
                         }
                     }
@@ -313,6 +334,46 @@ public class NetWork_manager : MonoBehaviour
                         //m_userNameName = getPack.userNum.ToString();
                     }
                     break;
+                case GAME_PACKET.ANISTATE:
+                    {
+                        var getPack = (AniStatePacket)basePack;
+
+                        Debug.Log("packetId : " + getPack.id);
+                        Debug.Log("Anistate : " + getPack.checkAniNum);
+
+                        otherPlayerAni = m_playerList[(int)getPack.id].GetComponent<OtherPlayerAnimator>();
+                        
+                        if(otherPlayerAni != null)
+                        {
+                            if(getPack.checkAniNum == (int)AniState.Idle)
+                            {
+                                StartCoroutine(otherPlayerAni.SetAnimationState(AniState.Idle));
+                            }
+                            else if(getPack.checkAniNum == (int)AniState.Run)
+                            {
+                                StartCoroutine(otherPlayerAni.SetAnimationState(AniState.Run));
+                            }
+                            else if(getPack.checkAniNum == (int)AniState.Attack)
+                            {
+                                StartCoroutine(otherPlayerAni.SetAnimationTrigger(AniState.Attack));
+                            }
+                            else if(getPack.checkAniNum == (int)AniState.Jump)
+                            {
+                                StartCoroutine(otherPlayerAni.SetAnimationTrigger(AniState.Jump));
+                            }
+                        }
+
+                        //if(getPack.checkAniNum < 3)
+                        //{
+                        //    StartCoroutine(otherPlayerAni.SetAnimationState(getPack.checkAniNum));
+                        //}
+                        //else if(getPack.checkAniNum >= 3)
+                        //{
+                            
+                            
+                        //}
+                    }
+                    break;
                 case GAME_PACKET.TEST:
                     {
                         var getPack = (TestPacket)basePack;
@@ -322,7 +383,6 @@ public class NetWork_manager : MonoBehaviour
                     break;
             }
         }
-
     }
 
 

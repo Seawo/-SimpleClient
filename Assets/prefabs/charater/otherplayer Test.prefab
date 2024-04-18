@@ -2124,7 +2124,7 @@ GameObject:
   - component: {fileID: 4785436779851803403}
   - component: {fileID: 5190675898960543024}
   - component: {fileID: 365688237199319961}
-  - component: {fileID: 8877902147642324006}
+  - component: {fileID: 6723900282991034100}
   m_Layer: 0
   m_Name: otherplayer Test
   m_TagString: Untagged
@@ -2191,7 +2191,7 @@ CharacterController:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Height: 1
   m_Radius: 0.3
@@ -2200,7 +2200,7 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
---- !u!114 &8877902147642324006
+--- !u!114 &6723900282991034100
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2212,6 +2212,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9427d3a2b19890418fd075e9c7a90db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  swordCollider2: {fileID: 0}
+  swordParticleSystem: {fileID: 0}
 --- !u!1 &6866717694174964841
 GameObject:
   m_ObjectHideFlags: 0

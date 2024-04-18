@@ -45,7 +45,7 @@ public class PlayerAnimator : MonoBehaviour
     // sword 충돌박스 생성
     public void AttackCollision()
     {
-        Debug.Log("attack");
+        //Debug.Log("attack");
         StartCoroutine(DisableCollider2(swordCollider2));
     }
 

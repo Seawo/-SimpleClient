@@ -99,13 +99,10 @@ public class Enemy : MonoBehaviour
     // 현재 상태 걷기, 뛰기, 전투 모드 등등 지속적인 상태 구분
     IEnumerator SetAnimationState(AniState state)
     {
-        isState = false;
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
         aniStateValue = (int)state;
         animator.SetInteger("AniState", aniStateValue);
         yield return new WaitForSeconds(0.3f);
-        
-        isState = true;
     }
 
     // 공격 패턴 애니메이션 다시 이전 애니메이션으로 돌아가는 부분 예를 들어 공격하고 전투모드로
@@ -115,7 +112,7 @@ public class Enemy : MonoBehaviour
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
         //Debug.Log(state.ToString());
         animator.SetTrigger("do" + state.ToString());
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(1f);
         isState = true;
     }
 
@@ -123,10 +120,13 @@ public class Enemy : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("hit target : "+other.name);
-        if (other.name == "SwordCollier" || !isDead)
+        if (other.name == "SwordCollier" && !isDead)
         {
-            StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             StartCoroutine(OnDamage());
+            if(isState == true)
+            {
+                StartCoroutine(SetAnimationTrigger(AniState.GetHit));
+            }
         }
     }
 

@@ -824,7 +824,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ipAddr: 127.0.0.1
   m_port: 12345
-  playerPrefab: {fileID: 6562233975712204023, guid: 55712fdfe43b4e54c9bcfe94cdc5b559, type: 3}
+  playerPrefab: {fileID: 5532719493679408360, guid: 6dae4a4c4c6f2ab48ae8077d212e2a9f, type: 3}
   m_myID: 0
 --- !u!114 &1770712300
 MonoBehaviour:
