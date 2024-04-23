@@ -12,8 +12,8 @@ public class OtherPlayerAnimator : MonoBehaviour
         Run,
 
         // otherPlayer trigger
-        Attack,
         Jump,
+        Attack,
     }
 
 

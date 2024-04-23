@@ -347,19 +347,21 @@ public class NetWork_manager : MonoBehaviour
                         {
                             if(getPack.checkAniNum == (int)AniState.Idle)
                             {
+                                Debug.Log("∏ÿ√Ë¥Ÿ");
                                 StartCoroutine(otherPlayerAni.SetAnimationState(AniState.Idle));
                             }
                             else if(getPack.checkAniNum == (int)AniState.Run)
                             {
                                 StartCoroutine(otherPlayerAni.SetAnimationState(AniState.Run));
-                            }
-                            else if(getPack.checkAniNum == (int)AniState.Attack)
-                            {
-                                StartCoroutine(otherPlayerAni.SetAnimationTrigger(AniState.Attack));
+                                Debug.Log("øÚ¡˜¿Œ¥Ÿ");
                             }
                             else if(getPack.checkAniNum == (int)AniState.Jump)
                             {
                                 StartCoroutine(otherPlayerAni.SetAnimationTrigger(AniState.Jump));
+                            }
+                            else if(getPack.checkAniNum == (int)AniState.Attack)
+                            {
+                                StartCoroutine(otherPlayerAni.SetAnimationTrigger(AniState.Attack));
                             }
                         }
 

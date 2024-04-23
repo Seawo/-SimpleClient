@@ -100,9 +100,11 @@ public class Enemy : MonoBehaviour
     IEnumerator SetAnimationState(AniState state)
     {
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
+        isState = false;
         aniStateValue = (int)state;
         animator.SetInteger("AniState", aniStateValue);
         yield return new WaitForSeconds(0.3f);
+        isState = true;
     }
 
     // 공격 패턴 애니메이션 다시 이전 애니메이션으로 돌아가는 부분 예를 들어 공격하고 전투모드로
