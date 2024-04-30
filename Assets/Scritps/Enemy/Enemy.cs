@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -45,8 +46,8 @@ public class Enemy : MonoBehaviour
         animator = GetComponent<Animator>();
         curHealth = maxHealth;
 
-        //animator.SetInteger("AniState", (int)AniState.Sleep);
-        StartCoroutine(Think());
+        animator.SetInteger("AniState", (int)AniState.Sleep);
+        //StartCoroutine(Think());
     }
 
     private void Update()
@@ -79,6 +80,11 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if(curHealth == maxHealth)
+        {
+            StartCoroutine(Think());
+        }
+
         Debug.Log("hit target : "+other.name);
         if (other.name == "SwordCollier" && !isDead)
         {
@@ -88,6 +94,8 @@ public class Enemy : MonoBehaviour
                 StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             }
         }
+
+        
     }
 
     IEnumerator OnDamage()
@@ -110,35 +118,46 @@ public class Enemy : MonoBehaviour
 
     IEnumerator Die()
     {
+        isDead = true;
+        bossCollider.enabled = false;
         meshRenderer.material.color = Color.black;
         StartCoroutine(SetAnimationState(AniState.Death));
-        bossCollider.enabled = false;
         yield return new WaitForSeconds(6f);
-        isDead = true;
         Destroy(this.gameObject);
     }
 
     IEnumerator Think()
     {
         // 기본 Idle 상태에서 
-        StartCoroutine(SetAnimationState(AniState.IdleCombat));
-        yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
-
-        int ranAction = Random.Range(0, 4);
-        switch (ranAction)
+        if ( isDead != true )
         {
-            case 0:
-            case 1:
-                StartCoroutine(Attack1());
-                break;
-            case 2:
-            case 3:
-                StartCoroutine (Attack2());
-                break;
-            case 4:
-                StartCoroutine(Buff());
-                break;
+            StartCoroutine(SetAnimationState(AniState.IdleCombat));
+            yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
+
+            int ranAction = Random.Range(0, 2);
+            switch (ranAction)
+            {
+                case 0:
+                case 1:
+                    StartCoroutine(Attack1());
+                    break;
+                case 2:
+                case 3:
+                    StartCoroutine(Attack2());
+                    break;
+                case 4:
+                    StartCoroutine(Buff());
+                    break;
+            }
         }
+        else
+        {
+            StopCoroutine(Think());
+            StopCoroutine(Attack1());
+            StopCoroutine(Attack2());
+            StopCoroutine(Buff());
+        }
+        
     }
 
     IEnumerator Attack1()
