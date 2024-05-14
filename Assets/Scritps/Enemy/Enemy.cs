@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEngine;
+using UnityEngine.AI;
 using Random = UnityEngine.Random;
 
 public class Enemy : MonoBehaviour
@@ -23,8 +25,9 @@ public class Enemy : MonoBehaviour
         Buff,
     }
 
-    public float maxHealth = 100.0f;
-    public float curHealth = 0.0f;
+    public float maxHealth = 100.0f;  // 최대 체력 
+    public float curHealth = 0.0f;  // 현재 체력
+
     public float bossTermTime = 0.1f;
     public float bossAniTime = 3.0f;
 
@@ -34,9 +37,21 @@ public class Enemy : MonoBehaviour
     private Animator animator;
 
     public int aniStateValue = 0;
-    
-    private bool isState = true;
-    private bool isDead = false;
+
+    private bool isState = true; // Anistate
+    private bool isDead = false; // 죽음
+    private bool isPatrol = false; // 순찰
+    private bool isBattle = false; // 배틀
+
+
+    NavMeshAgent m_enemy = null;
+
+    [SerializeField] Transform[] m_tWayPoints = null;
+    int m_count = 0;
+
+    float m_bossPatrolSpeed = 2.5f;
+    float m_bosschaseSpeed = 5.0f;
+    Transform m_target = null;
 
 
     private void Awake()
@@ -46,44 +61,119 @@ public class Enemy : MonoBehaviour
         animator = GetComponent<Animator>();
         curHealth = maxHealth;
 
+        m_enemy = GetComponent<NavMeshAgent>();
+
         animator.SetInteger("AniState", (int)AniState.Sleep);
-        //StartCoroutine(Think());
+
+        InvokeRepeating("MoveToNextWayPoint", 0f, 1.5f);
     }
 
     private void Update()
     {
+        if (m_target != null && isBattle == false)
+        {
+            //m_enemy.SetDestination(m_target.position);
 
+            if (Vector3.Distance(m_target.position, this.transform.position) <= 8.0f)
+            {
+                m_enemy.acceleration = 0f;
+                m_enemy.velocity = Vector3.zero;
+                Debug.Log("앞에있다");
+                isBattle = true;
+                isPatrol = false;
+                animator.SetInteger("AniState", (int)AniState.IdleCombat);
+            }
+            else
+            {
+                m_enemy.SetDestination(m_target.position);
+                isBattle = false;
+                Debug.Log("달린다");
+            }
+        }
+    }
+
+    public void SetTarget(Transform p_target)
+    {
+        CancelInvoke();
+        isPatrol = true;
+        m_target = p_target;
+        animator.SetInteger("AniState", (int)AniState.Run);
+        m_enemy.speed = m_bosschaseSpeed;
+    }
+
+    public void RemoveTarget()
+    {
+        m_target = null;
+        isBattle = false;
+        InvokeRepeating("MoveToNextWayPoint", 0f, 1.5f); // 0초후, 1.5초마다 실행
+        Debug.Log("patrol");
+    }
+
+    void MoveToNextWayPoint()
+    {
+        if (m_target == null)
+        {
+            isPatrol = true;
+            m_enemy.speed = m_bossPatrolSpeed;
+
+            // 도착 했다면 가만히 서 있는다
+            if (m_enemy.velocity.sqrMagnitude >= 0.2f * 0.2f && m_enemy.remainingDistance <= 0.5f)
+            {
+                animator.SetInteger("AniState", (int)AniState.IdleCombat);
+                Debug.LogWarning("도착");
+            }
+
+            //도착한다면 다음 waypoint로 넘어간다
+            if (m_enemy.velocity == Vector3.zero)
+            {
+                //animator.SetInteger("AniState", (int)AniState.IdleCombat);
+
+                Debug.Log("현재 목적지는 " + m_tWayPoints[m_count].name + " 입니다");
+                m_enemy.SetDestination(m_tWayPoints[m_count++].position);
+
+                // 다시 움직인다
+                animator.SetInteger("AniState", (int)AniState.Walk);
+
+                // 카운터가 최대가 된다면 다시 처음위치에서 움직이게 사이클
+                if (m_count >= m_tWayPoints.Length)
+                    m_count = 0;
+            }
+            else
+            {
+                // 다음 목적지로 향하게 이동 한다
+                animator.SetInteger("AniState", (int)AniState.Walk);
+            }
+        }
     }
 
     // 현재 상태 걷기, 뛰기, 전투 모드 등등 지속적인 상태 구분
-    IEnumerator SetAnimationState(AniState state)
+    IEnumerator SetAnimationState(AniState p_state)
     {
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
         isState = false;
-        aniStateValue = (int)state;
+        aniStateValue = (int)p_state;
         animator.SetInteger("AniState", aniStateValue);
         yield return new WaitForSeconds(0.3f);
         isState = true;
     }
 
     // 공격 패턴 애니메이션 다시 이전 애니메이션으로 돌아가는 부분 예를 들어 공격하고 전투모드로
-    IEnumerator SetAnimationTrigger(AniState state)
+    IEnumerator SetAnimationTrigger(AniState p_state)
     {
         isState = true;
         // AniState 열거형 멤버를 정수 값으로 변환하여 전달
         //Debug.Log(state.ToString());
-        animator.SetTrigger("do" + state.ToString());
+        animator.SetTrigger("do" + p_state.ToString());
         yield return new WaitForSeconds(1f);
         isState = false;
     }
-
 
     private void OnTriggerEnter(Collider other)
     {
         if(curHealth == maxHealth)
         {
-            StartCoroutine(Think());
         }
+        StartCoroutine(AttackPattern());
 
         Debug.Log("hit target : "+other.name);
         if (other.name == "SwordCollier" && !isDead)
@@ -91,11 +181,10 @@ public class Enemy : MonoBehaviour
             StartCoroutine(OnDamage());
             if(isState != true)
             {
+                // 공격 상태일때 공격 받으면 히트 애니 재생 x
                 StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             }
         }
-
-        
     }
 
     IEnumerator OnDamage()
@@ -126,10 +215,10 @@ public class Enemy : MonoBehaviour
         Destroy(this.gameObject);
     }
 
-    IEnumerator Think()
+    IEnumerator AttackPattern()
     {
         // 기본 Idle 상태에서 
-        if ( isDead != true )
+        if (isDead != true && isPatrol == false && isBattle == true)
         {
             StartCoroutine(SetAnimationState(AniState.IdleCombat));
             yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
@@ -152,7 +241,7 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            StopCoroutine(Think());
+            StopCoroutine(AttackPattern());
             StopCoroutine(Attack1());
             StopCoroutine(Attack2());
             StopCoroutine(Buff());
@@ -168,7 +257,7 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(bossAniTime);
         isState = false;
 
-        StartCoroutine(Think());
+        StartCoroutine(AttackPattern());
     }
 
     IEnumerator Attack2()
@@ -179,7 +268,7 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(bossAniTime);
         isState = true;
 
-        StartCoroutine(Think());
+        StartCoroutine(AttackPattern());
     }
 
     IEnumerator Buff()
@@ -193,7 +282,7 @@ public class Enemy : MonoBehaviour
             isState = true;
         }
 
-        StartCoroutine(Think());
+        StartCoroutine(AttackPattern());
     }
 
 }

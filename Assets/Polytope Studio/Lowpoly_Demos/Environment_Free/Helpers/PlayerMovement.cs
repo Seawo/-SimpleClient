@@ -40,7 +40,7 @@ public class PlayerMovement : MonoBehaviour
         playerAnimator = GetComponent<PlayerAnimator>();
 
         // Plane 오브젝트 찾기
-        groundCheck = GameObject.Find("Plane").transform;
+        groundCheck = GameObject.FindGameObjectWithTag("plane").transform;
     }
 
 
@@ -71,11 +71,12 @@ public class PlayerMovement : MonoBehaviour
 
         controller.Move(move * speed * Time.deltaTime);
 
-        if (Input.GetKeyDown(KeyCode.Space)&& isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             playerAnimator.OnJump();
         }
+
 
         velocity.y += gravity * Time.deltaTime; // 중력
         controller.Move(velocity * Time.deltaTime);
