@@ -363,6 +363,7 @@ GameObject:
   - component: {fileID: 6978440239774791372}
   - component: {fileID: 3966644559618342040}
   - component: {fileID: 3575602004032950275}
+  - component: {fileID: 8218044160420460216}
   m_Layer: 0
   m_Name: OtherPlayer
   m_TagString: Player
@@ -428,6 +429,32 @@ MonoBehaviour:
   aniStateValue: 0
   swordCollider2: {fileID: 3191062522868693467}
   swordParticleSystem: {fileID: 484368387861551534, guid: 9b21333b068a5084ba09535839bee3c8, type: 3}
+--- !u!143 &8218044160420460216
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5532719493679408360}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6023620779032701420
 GameObject:
   m_ObjectHideFlags: 0

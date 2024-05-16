@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Enemy : MonoBehaviour
@@ -25,6 +26,8 @@ public class Enemy : MonoBehaviour
         Buff,
     }
 
+    public Slider m_bosshpslider;
+
     public float maxHealth = 100.0f;  // 최대 체력 
     public float curHealth = 0.0f;  // 현재 체력
 
@@ -39,12 +42,12 @@ public class Enemy : MonoBehaviour
     public int aniStateValue = 0;
 
     private bool isState = true; // Anistate
-    private bool isDead = false; // 죽음
+    public bool isDead = false; // 죽음
     private bool isPatrol = false; // 순찰
     private bool isBattle = false; // 배틀
 
 
-    NavMeshAgent m_enemy = null;
+    NavMeshAgent m_TargetPlayer = null;
 
     [SerializeField] Transform[] m_tWayPoints = null;
     int m_count = 0;
@@ -61,34 +64,41 @@ public class Enemy : MonoBehaviour
         animator = GetComponent<Animator>();
         curHealth = maxHealth;
 
-        m_enemy = GetComponent<NavMeshAgent>();
+        m_TargetPlayer = GetComponent<NavMeshAgent>();
 
         animator.SetInteger("AniState", (int)AniState.Sleep);
 
-        InvokeRepeating("MoveToNextWayPoint", 0f, 1.5f);
+        InvokeRepeating("MoveToNextWayPoint", 0f, 2f);
     }
 
     private void Update()
     {
+        m_bosshpslider.value = curHealth/100;
+
         if (m_target != null && isBattle == false)
         {
             //m_enemy.SetDestination(m_target.position);
 
-            if (Vector3.Distance(m_target.position, this.transform.position) <= 8.0f)
+            if (Vector3.Distance(m_target.position, this.transform.position) <= 7.0f)
             {
-                m_enemy.acceleration = 0f;
-                m_enemy.velocity = Vector3.zero;
-                Debug.Log("앞에있다");
+                m_TargetPlayer.acceleration = 0f;
+                m_TargetPlayer.velocity = Vector3.zero;
+                //Debug.Log("앞에있다");
                 isBattle = true;
                 isPatrol = false;
                 animator.SetInteger("AniState", (int)AniState.IdleCombat);
             }
             else
             {
-                m_enemy.SetDestination(m_target.position);
+                m_TargetPlayer.SetDestination(m_target.position);
                 isBattle = false;
-                Debug.Log("달린다");
+                //Debug.Log("달린다");
             }
+        }
+        else if (m_TargetPlayer.velocity.sqrMagnitude >= 0.2f * 0.2f && m_TargetPlayer.remainingDistance <= 0.5f)
+        {
+            animator.SetInteger("AniState", (int)AniState.IdleCombat);
+            Debug.LogWarning("도착");
         }
     }
 
@@ -98,14 +108,14 @@ public class Enemy : MonoBehaviour
         isPatrol = true;
         m_target = p_target;
         animator.SetInteger("AniState", (int)AniState.Run);
-        m_enemy.speed = m_bosschaseSpeed;
+        m_TargetPlayer.speed = m_bosschaseSpeed;
     }
 
     public void RemoveTarget()
     {
         m_target = null;
         isBattle = false;
-        InvokeRepeating("MoveToNextWayPoint", 0f, 1.5f); // 0초후, 1.5초마다 실행
+        InvokeRepeating("MoveToNextWayPoint", 0f, 2f); // 0초후, 1.5초마다 실행
         Debug.Log("patrol");
     }
 
@@ -114,22 +124,22 @@ public class Enemy : MonoBehaviour
         if (m_target == null)
         {
             isPatrol = true;
-            m_enemy.speed = m_bossPatrolSpeed;
+            m_TargetPlayer.speed = m_bossPatrolSpeed;
 
             // 도착 했다면 가만히 서 있는다
-            if (m_enemy.velocity.sqrMagnitude >= 0.2f * 0.2f && m_enemy.remainingDistance <= 0.5f)
+            if (m_TargetPlayer.velocity.sqrMagnitude >= 0.2f * 0.2f && m_TargetPlayer.remainingDistance <= 0.5f)
             {
                 animator.SetInteger("AniState", (int)AniState.IdleCombat);
                 Debug.LogWarning("도착");
             }
 
             //도착한다면 다음 waypoint로 넘어간다
-            if (m_enemy.velocity == Vector3.zero)
+            if (m_TargetPlayer.velocity == Vector3.zero)
             {
                 //animator.SetInteger("AniState", (int)AniState.IdleCombat);
 
                 Debug.Log("현재 목적지는 " + m_tWayPoints[m_count].name + " 입니다");
-                m_enemy.SetDestination(m_tWayPoints[m_count++].position);
+                m_TargetPlayer.SetDestination(m_tWayPoints[m_count++].position);
 
                 // 다시 움직인다
                 animator.SetInteger("AniState", (int)AniState.Walk);
@@ -172,11 +182,12 @@ public class Enemy : MonoBehaviour
     {
         if(curHealth == maxHealth)
         {
+            AttackPattern();
         }
-        StartCoroutine(AttackPattern());
+        //StartCoroutine(AttackPattern());
 
         Debug.Log("hit target : "+other.name);
-        if (other.name == "SwordCollier" && !isDead)
+        if (other.name == "SwordCollier" && isDead == false)
         {
             StartCoroutine(OnDamage());
             if(isState != true)
@@ -189,6 +200,7 @@ public class Enemy : MonoBehaviour
 
     IEnumerator OnDamage()
     {
+        
         curHealth -= 10.0f;
         meshRenderer.material.color = Color.red;
 
@@ -198,10 +210,11 @@ public class Enemy : MonoBehaviour
         {
             meshRenderer.material.color = Color.white;
         }
-        else if (curHealth <= 0)
+        else if (curHealth == 0)
         {
             // 죽었을때.
             StartCoroutine(Die());
+            //Debug.Log("죽었다");
         }
     }
 
@@ -212,18 +225,20 @@ public class Enemy : MonoBehaviour
         meshRenderer.material.color = Color.black;
         StartCoroutine(SetAnimationState(AniState.Death));
         yield return new WaitForSeconds(6f);
+        Destroy(m_bosshpslider.gameObject);
         Destroy(this.gameObject);
     }
 
-    IEnumerator AttackPattern()
+    private void AttackPattern()
     {
         // 기본 Idle 상태에서 
-        if (isDead != true && isPatrol == false && isBattle == true)
+        if (isDead == false && isPatrol == false && isBattle == true)
         {
             StartCoroutine(SetAnimationState(AniState.IdleCombat));
-            yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
+            //yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
 
-            int ranAction = Random.Range(0, 2);
+            int ranAction = Random.Range(0, 1);
+            Debug.LogWarning(ranAction);
             switch (ranAction)
             {
                 case 0:
@@ -239,15 +254,49 @@ public class Enemy : MonoBehaviour
                     break;
             }
         }
-        else
-        {
-            StopCoroutine(AttackPattern());
-            StopCoroutine(Attack1());
-            StopCoroutine(Attack2());
-            StopCoroutine(Buff());
-        }
-        
+        //else if (isDead == true && isPatrol == false)
+        //{
+
+        //    StopCoroutine(SetAnimationTrigger(AniState.Attack1));
+        //    StopCoroutine(SetAnimationTrigger(AniState.Attack2));
+        //    StopCoroutine(SetAnimationTrigger(AniState.Buff));
+        //    StopCoroutine(Attack1());
+        //    StopCoroutine(Attack2());
+        //    StopCoroutine(Buff());
+        //}
     }
+    //IEnumerator AttackPattern()
+    //{
+    //    // 기본 Idle 상태에서 
+    //    if (isDead == false && isPatrol == false && isBattle == true)
+    //    {
+    //        StartCoroutine(SetAnimationState(AniState.IdleCombat));
+    //        yield return new WaitForSeconds(bossAniTime); // 기본 텀 시간
+
+    //        int ranAction = Random.Range(0, 4);
+    //        Debug.LogWarning(ranAction);
+    //        switch (ranAction)
+    //        {
+    //            case 0:
+    //            case 1:
+    //                StartCoroutine(Attack1());
+    //                break;
+    //            case 2:
+    //            case 3:
+    //                StartCoroutine(Attack2());
+    //                break;
+    //            case 4:
+    //                StartCoroutine(Buff());
+    //                break;
+    //        }
+    //    }
+    //    else if (isDead == true && isPatrol == false)
+    //    {
+    //        StopCoroutine(AttackPattern());
+    //    }
+
+    //}
+
 
     IEnumerator Attack1()
     {
@@ -256,9 +305,10 @@ public class Enemy : MonoBehaviour
         StartCoroutine(SetAnimationTrigger(AniState.Attack1));
         yield return new WaitForSeconds(bossAniTime);
         isState = false;
-
-        StartCoroutine(AttackPattern());
+        AttackPattern();
+        //StartCoroutine(AttackPattern());
     }
+
 
     IEnumerator Attack2()
     {
@@ -267,22 +317,23 @@ public class Enemy : MonoBehaviour
         StartCoroutine(SetAnimationTrigger(AniState.Attack2));
         yield return new WaitForSeconds(bossAniTime);
         isState = true;
-
-        StartCoroutine(AttackPattern());
+        AttackPattern();
+        //StartCoroutine(AttackPattern());
     }
+
 
     IEnumerator Buff()
     {
         // 피가 절반 때부터 발동이 가능한 상태
-        if(curHealth <= maxHealth/2)
+        if (curHealth <= maxHealth / 2)
         {
             isState = false;
             StartCoroutine(SetAnimationTrigger(AniState.Buff));
             yield return new WaitForSeconds(bossAniTime);
             isState = true;
         }
-
-        StartCoroutine(AttackPattern());
+        AttackPattern();
+        //StartCoroutine(AttackPattern());
     }
 
 }
