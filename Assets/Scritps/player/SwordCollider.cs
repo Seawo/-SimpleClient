@@ -4,18 +4,31 @@ using UnityEngine;
 
 public class SwordCollider : MonoBehaviour
 {
+    
     public ParticleSystem[] swordImpact;
 
     private void OnTriggerEnter(Collider other)
     {
-        // 허공의 공격할때
-        if( other != null)
+        // Monster가 맞았다면...
+        if( other.CompareTag("Monster"))
         {
-            swordImpact[0].gameObject.SetActive(true);
+            DamageEffect();
         }
-        else if( other.name == "")
+        else
         {
-            swordImpact[1].gameObject.SetActive(true);
+            // 다른 것이 맞았다면...
         }
+    }
+
+    
+    void DamageEffect()
+    {
+        ParticleSystem obj = (ParticleSystem)Instantiate(swordImpact[0]);
+        obj.transform.SetParent(this.transform, false);
+    }
+
+    private void OnDisable()
+    {
+        Destroy(this.transform.GetChild(0).gameObject);        
     }
 }

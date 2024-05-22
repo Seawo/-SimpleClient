@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using TMPro;
 using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEngine;
@@ -27,9 +28,17 @@ public class Enemy : MonoBehaviour
     }
 
     public Slider m_bosshpslider;
+    public Slider m_bosssBackhpslider;
 
-    public float maxHealth = 100.0f;  // ÃÖ´ë Ã¼·Â 
-    public float curHealth = 0.0f;  // ÇöÀç Ã¼·Â
+    public GameObject DamageUI;
+    public DamageText c_DamageUI;
+
+    [SerializeField]
+    Camera m_cam;
+
+    [SerializeField]
+    private float maxHealth = 3000.0f;  // ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ 
+    public float curHealth = 0.0f;  // ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½
 
     public float bossTermTime = 0.1f;
     public float bossAniTime = 3.0f;
@@ -38,15 +47,12 @@ public class Enemy : MonoBehaviour
     private Rigidbody rigid;
     private BoxCollider bossCollider;
     private Animator animator;
+    public Transform headPos;
 
     public int aniStateValue = 0;
 
-    private bool isState = true; // Anistate
-    public bool isDead = false; // Á×À½
-    private bool isPatrol = false; // ¼øÂû
-    private bool isBattle = false; // ¹èÆ²
 
-
+    [SerializeField]
     NavMeshAgent m_TargetPlayer = null;
 
     [SerializeField] Transform[] m_tWayPoints = null;
@@ -56,12 +62,17 @@ public class Enemy : MonoBehaviour
     float m_bosschaseSpeed = 5.0f;
     Transform m_target = null;
 
+    private bool isState = true; // Anistate
+    public bool isDead = false; // ï¿½ï¿½ï¿½ï¿½
+    public bool isPatrol = false; // ï¿½ï¿½ï¿½ï¿½
+    public bool isBattle = false; // ï¿½ï¿½Æ²
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody>();
         bossCollider = GetComponent<BoxCollider>();
         animator = GetComponent<Animator>();
+
         curHealth = maxHealth;
 
         m_TargetPlayer = GetComponent<NavMeshAgent>();
@@ -73,32 +84,41 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
-        m_bosshpslider.value = curHealth/100;
+        m_bosshpslider.value = Mathf.Lerp(m_bosshpslider.value, curHealth/maxHealth, Time.deltaTime*5f);
+        m_bosssBackhpslider.value = Mathf.Lerp(m_bosssBackhpslider.value, m_bosshpslider.value, Time.deltaTime * 2f);
+
 
         if (m_target != null && isBattle == false)
         {
             //m_enemy.SetDestination(m_target.position);
 
-            if (Vector3.Distance(m_target.position, this.transform.position) <= 7.0f)
+            if (Vector3.Distance(m_target.position, this.transform.position) <= 6.0f)
             {
+                m_bosshpslider.gameObject.SetActive(true);
+                m_bosssBackhpslider.gameObject.SetActive(true);
+
                 m_TargetPlayer.acceleration = 0f;
                 m_TargetPlayer.velocity = Vector3.zero;
-                //Debug.Log("¾Õ¿¡ÀÖ´Ù");
+               
                 isBattle = true;
                 isPatrol = false;
                 animator.SetInteger("AniState", (int)AniState.IdleCombat);
             }
             else
             {
+                m_bosshpslider.gameObject.SetActive(false);
+                m_bosssBackhpslider.gameObject.SetActive(false);
+
+
                 m_TargetPlayer.SetDestination(m_target.position);
                 isBattle = false;
-                //Debug.Log("´Ş¸°´Ù");
+                
             }
         }
         else if (m_TargetPlayer.velocity.sqrMagnitude >= 0.2f * 0.2f && m_TargetPlayer.remainingDistance <= 0.5f)
         {
             animator.SetInteger("AniState", (int)AniState.IdleCombat);
-            Debug.LogWarning("µµÂø");
+            //Debug.LogWarning("ë„ì°©");
         }
     }
 
@@ -115,8 +135,9 @@ public class Enemy : MonoBehaviour
     {
         m_target = null;
         isBattle = false;
-        InvokeRepeating("MoveToNextWayPoint", 0f, 2f); // 0ÃÊÈÄ, 1.5ÃÊ¸¶´Ù ½ÇÇà
-        Debug.Log("patrol");
+        InvokeRepeating("MoveToNextWayPoint", 0f, 2f); // 0ì´ˆí›„, 1.5ì´ˆë§ˆë‹¤ ì‹¤í–‰
+        Debug.Log("patrol");    
+
     }
 
     void MoveToNextWayPoint()
@@ -126,40 +147,40 @@ public class Enemy : MonoBehaviour
             isPatrol = true;
             m_TargetPlayer.speed = m_bossPatrolSpeed;
 
-            // µµÂø Çß´Ù¸é °¡¸¸È÷ ¼­ ÀÖ´Â´Ù
+            // ë„ì°© í–ˆë‹¤ë©´ ê°€ë§Œíˆ ì„œ ìˆëŠ”ë‹¤
             if (m_TargetPlayer.velocity.sqrMagnitude >= 0.2f * 0.2f && m_TargetPlayer.remainingDistance <= 0.5f)
             {
                 animator.SetInteger("AniState", (int)AniState.IdleCombat);
-                Debug.LogWarning("µµÂø");
+                Debug.LogWarning("ï¿½ï¿½ï¿½ï¿½");
             }
 
-            //µµÂøÇÑ´Ù¸é ´ÙÀ½ waypoint·Î ³Ñ¾î°£´Ù
+            //ë„ì°©í•œë‹¤ë©´ ë‹¤ìŒ waypointë¡œ ë„˜ì–´ê°„ë‹¤
             if (m_TargetPlayer.velocity == Vector3.zero)
             {
                 //animator.SetInteger("AniState", (int)AniState.IdleCombat);
 
-                Debug.Log("ÇöÀç ¸ñÀûÁö´Â " + m_tWayPoints[m_count].name + " ÀÔ´Ï´Ù");
+                Debug.Log("í˜„ì¬ ëª©ì ì§€ëŠ” " + m_tWayPoints[m_count].name + " ì…ë‹ˆë‹¤");
                 m_TargetPlayer.SetDestination(m_tWayPoints[m_count++].position);
 
-                // ´Ù½Ã ¿òÁ÷ÀÎ´Ù
+                // ë‹¤ì‹œ ì›€ì§ì¸ë‹¤
                 animator.SetInteger("AniState", (int)AniState.Walk);
 
-                // Ä«¿îÅÍ°¡ ÃÖ´ë°¡ µÈ´Ù¸é ´Ù½Ã Ã³À½À§Ä¡¿¡¼­ ¿òÁ÷ÀÌ°Ô »çÀÌÅ¬
+                // ì¹´ìš´í„°ê°€ ìµœëŒ€ê°€ ëœë‹¤ë©´ ë‹¤ì‹œ ì²˜ìŒìœ„ì¹˜ì—ì„œ ì›€ì§ì´ê²Œ ì‚¬ì´í´
                 if (m_count >= m_tWayPoints.Length)
                     m_count = 0;
             }
             else
             {
-                // ´ÙÀ½ ¸ñÀûÁö·Î ÇâÇÏ°Ô ÀÌµ¿ ÇÑ´Ù
+                // ë‹¤ìŒ ëª©ì ì§€ë¡œ í–¥í•˜ê²Œ ì´ë™ í•œë‹¤
                 animator.SetInteger("AniState", (int)AniState.Walk);
             }
         }
     }
 
-    // ÇöÀç »óÅÂ °È±â, ¶Ù±â, ÀüÅõ ¸ğµå µîµî Áö¼ÓÀûÀÎ »óÅÂ ±¸ºĞ
+    // í˜„ì¬ ìƒíƒœ ê±·ê¸°, ë›°ê¸°, ì „íˆ¬ ëª¨ë“œ ë“±ë“± ì§€ì†ì ì¸ ìƒíƒœ êµ¬ë¶„
     IEnumerator SetAnimationState(AniState p_state)
     {
-        // AniState ¿­°ÅÇü ¸â¹ö¸¦ Á¤¼ö °ªÀ¸·Î º¯È¯ÇÏ¿© Àü´Ş
+        // AniState ì—´ê±°í˜• ë©¤ë²„ë¥¼ ì •ìˆ˜ ê°’ìœ¼ë¡œ ë³€í™˜í•˜ì—¬ ì „ë‹¬
         isState = false;
         aniStateValue = (int)p_state;
         animator.SetInteger("AniState", aniStateValue);
@@ -167,11 +188,11 @@ public class Enemy : MonoBehaviour
         isState = true;
     }
 
-    // °ø°İ ÆĞÅÏ ¾Ö´Ï¸ŞÀÌ¼Ç ´Ù½Ã ÀÌÀü ¾Ö´Ï¸ŞÀÌ¼ÇÀ¸·Î µ¹¾Æ°¡´Â ºÎºĞ ¿¹¸¦ µé¾î °ø°İÇÏ°í ÀüÅõ¸ğµå·Î
+    // ê³µê²© íŒ¨í„´ ì• ë‹ˆë©”ì´ì…˜ ë‹¤ì‹œ ì´ì „ ì• ë‹ˆë©”ì´ì…˜ìœ¼ë¡œ ëŒì•„ê°€ëŠ” ë¶€ë¶„ ì˜ˆë¥¼ ë“¤ì–´ ê³µê²©í•˜ê³  ì „íˆ¬ëª¨ë“œë¡œ
     IEnumerator SetAnimationTrigger(AniState p_state)
     {
         isState = true;
-        // AniState ¿­°ÅÇü ¸â¹ö¸¦ Á¤¼ö °ªÀ¸·Î º¯È¯ÇÏ¿© Àü´Ş
+        // AniState ì—´ê±°í˜• ë©¤ë²„ë¥¼ ì •ìˆ˜ ê°’ìœ¼ë¡œ ë³€í™˜í•˜ì—¬ ì „ë‹¬
         //Debug.Log(state.ToString());
         animator.SetTrigger("do" + p_state.ToString());
         yield return new WaitForSeconds(1f);
@@ -189,19 +210,64 @@ public class Enemy : MonoBehaviour
         Debug.Log("hit target : "+other.name);
         if (other.name == "SwordCollier" && isDead == false)
         {
+            //TakeDamage();
             StartCoroutine(OnDamage());
-            if(isState != true)
+            if (isState != true)
             {
-                // °ø°İ »óÅÂÀÏ¶§ °ø°İ ¹ŞÀ¸¸é È÷Æ® ¾Ö´Ï Àç»ı x
+                // ê³µê²© ìƒíƒœì¼ë•Œ ê³µê²© ë°›ìœ¼ë©´ íˆíŠ¸ ì• ë‹ˆ ì¬ìƒ x
                 StartCoroutine(SetAnimationTrigger(AniState.GetHit));
             }
         }
     }
 
+    // testìš©
+    void TakeDamage()
+    {
+        int ranDamage = Random.Range(100, 500);
+        m_cam = Camera.main;
+        Instantiate(DamageUI);
+        c_DamageUI = DamageUI.GetComponentInChildren<DamageText>();
+        c_DamageUI.m_text.text = ranDamage.ToString();
+        c_DamageUI.m_text.transform.position = m_cam.WorldToScreenPoint(headPos.transform.position);
+        //DamageUI.transform.position = headPos.transform.position;
+
+        curHealth -= ranDamage;
+
+        Debug.Log("È­ï¿½é¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ : " + c_DamageUI.m_text.text);
+        Debug.Log("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ : " + ranDamage);
+        Debug.Log("ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ : " + curHealth.ToString());
+        meshRenderer.material.color = Color.red;
+
+        if (curHealth > 0)
+        {
+            meshRenderer.material.color = Color.white;
+        }
+        else if (curHealth <= 0)
+        {
+            // ï¿½×¾ï¿½ï¿½ï¿½ï¿½ï¿½.
+            StartCoroutine(Die());
+            //Debug.Log("ï¿½×¾ï¿½ï¿½ï¿½");
+        }
+    }
+
     IEnumerator OnDamage()
     {
-        
-        curHealth -= 10.0f;
+        int ranDamage = Random.Range(100, 500);
+        m_cam = Camera.main;
+        c_DamageUI = DamageUI.GetComponentInChildren<DamageText>();
+        c_DamageUI.m_text.text = ranDamage.ToString();
+        c_DamageUI.m_text.transform.position = m_cam.WorldToScreenPoint(headPos.transform.position);
+
+        Instantiate(DamageUI);
+
+        GameObject obj = Instantiate(DamageUI);
+        obj.transform.SetParent(transform.Find("head"), false);
+       
+        curHealth -= ranDamage;
+
+        Debug.Log("í™”ë©´ì— í‘œì‹œë˜ëŠ” ë°ë¯¸ì§€ : " + c_DamageUI.m_text.text);
+        Debug.Log("ì‹¤ì œ ë°ë¯¸ì§€ : " + ranDamage);
+        Debug.Log("í˜„ì¬ ì²´ë ¥ : " + curHealth.ToString());
         meshRenderer.material.color = Color.red;
 
         yield return new WaitForSeconds(0.1f);
@@ -210,11 +276,11 @@ public class Enemy : MonoBehaviour
         {
             meshRenderer.material.color = Color.white;
         }
-        else if (curHealth == 0)
+        else if (curHealth <= 0)
         {
-            // Á×¾úÀ»¶§.
+            // ï¿½×¾ï¿½ï¿½ï¿½ï¿½ï¿½.
             StartCoroutine(Die());
-            //Debug.Log("Á×¾ú´Ù");
+            //Debug.Log("ï¿½×¾ï¿½ï¿½ï¿½");
         }
     }
 
@@ -231,14 +297,15 @@ public class Enemy : MonoBehaviour
 
     private void AttackPattern()
     {
-        // ±âº» Idle »óÅÂ¿¡¼­ 
+        // ê¸°ë³¸ Idle ìƒíƒœì—ì„œ 
         if (isDead == false && isPatrol == false && isBattle == true)
         {
+
             StartCoroutine(SetAnimationState(AniState.IdleCombat));
-            //yield return new WaitForSeconds(bossAniTime); // ±âº» ÅÒ ½Ã°£
+            //yield return new WaitForSeconds(bossAniTime); // ï¿½âº» ï¿½ï¿½ ï¿½Ã°ï¿½
 
             int ranAction = Random.Range(0, 1);
-            Debug.LogWarning(ranAction);
+            //Debug.LogWarning(ranAction);
             switch (ranAction)
             {
                 case 0:
@@ -265,37 +332,6 @@ public class Enemy : MonoBehaviour
         //    StopCoroutine(Buff());
         //}
     }
-    //IEnumerator AttackPattern()
-    //{
-    //    // ±âº» Idle »óÅÂ¿¡¼­ 
-    //    if (isDead == false && isPatrol == false && isBattle == true)
-    //    {
-    //        StartCoroutine(SetAnimationState(AniState.IdleCombat));
-    //        yield return new WaitForSeconds(bossAniTime); // ±âº» ÅÒ ½Ã°£
-
-    //        int ranAction = Random.Range(0, 4);
-    //        Debug.LogWarning(ranAction);
-    //        switch (ranAction)
-    //        {
-    //            case 0:
-    //            case 1:
-    //                StartCoroutine(Attack1());
-    //                break;
-    //            case 2:
-    //            case 3:
-    //                StartCoroutine(Attack2());
-    //                break;
-    //            case 4:
-    //                StartCoroutine(Buff());
-    //                break;
-    //        }
-    //    }
-    //    else if (isDead == true && isPatrol == false)
-    //    {
-    //        StopCoroutine(AttackPattern());
-    //    }
-
-    //}
 
 
     IEnumerator Attack1()
@@ -324,7 +360,7 @@ public class Enemy : MonoBehaviour
 
     IEnumerator Buff()
     {
-        // ÇÇ°¡ Àı¹İ ¶§ºÎÅÍ ¹ßµ¿ÀÌ °¡´ÉÇÑ »óÅÂ
+        // í”¼ê°€ ì ˆë°˜ ë•Œë¶€í„° ë°œë™ì´ ê°€ëŠ¥í•œ ìƒíƒœ
         if (curHealth <= maxHealth / 2)
         {
             isState = false;

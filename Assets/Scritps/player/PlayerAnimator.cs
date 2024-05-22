@@ -18,7 +18,7 @@ public class PlayerAnimator : MonoBehaviour
     private Animator p_Animator;
     //public Collider[] skillImpactColiider;
 
-    public GameObject swordCollider2;
+    public GameObject swordCollider;
     public ParticleSystem swordParticleSystem;
 
     int hashAttackCount = Animator.StringToHash("attackCount");
@@ -90,10 +90,11 @@ public class PlayerAnimator : MonoBehaviour
     public void AttackCollision()
     {
         //Debug.Log("attack");
-        StartCoroutine(DisableCollider2(swordCollider2));
+        StartCoroutine(DisableCollider(swordCollider));
     }
 
-    IEnumerator DisableCollider2(GameObject sword)
+    // 검기 같은거 넣으면 좋구여
+    IEnumerator DisableCollider(GameObject sword)
     {
         //yield return new WaitForSeconds(0.1f);
         sword.active = true;
