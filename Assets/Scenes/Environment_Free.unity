@@ -501,8 +501,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_bosshpslider: {fileID: 1629533410}
   m_bosssBackhpslider: {fileID: 1507511511}
-  DamageUI: {fileID: 8716293024368008701, guid: ee0c26a2555711e40b1cc3eca6f9bc2b, type: 3}
-  c_DamageUI: {fileID: 4490623209647354221, guid: f7862b8c22bbc1947b51a68173385757, type: 3}
+  DamageUI: {fileID: 5008052110995952645, guid: 22aeeb4204d68d848b4c69e8716d8e95, type: 3}
+  c_DamageUI: {fileID: 0}
   m_cam: {fileID: 0}
   maxHealth: 3000
   curHealth: 0
@@ -1220,7 +1220,7 @@ GameObject:
   m_Component:
   - component: {fileID: 925110823}
   m_Layer: 0
-  m_Name: head
+  m_Name: DamageUiPos
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

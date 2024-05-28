@@ -37,8 +37,8 @@ public class Enemy : MonoBehaviour
     Camera m_cam;
 
     [SerializeField]
-    private float maxHealth = 3000.0f;  // �ִ� ü�� 
-    public float curHealth = 0.0f;  // ���� ü��
+    private float maxHealth = 3000.0f;  // 최대체력
+    public float curHealth = 0.0f;  // 현재체력
 
     public float bossTermTime = 0.1f;
     public float bossAniTime = 3.0f;
@@ -63,9 +63,9 @@ public class Enemy : MonoBehaviour
     Transform m_target = null;
 
     private bool isState = true; // Anistate
-    public bool isDead = false; // ����
-    public bool isPatrol = false; // ����
-    public bool isBattle = false; // ��Ʋ
+    public bool isDead = false; // 죽음
+    public bool isPatrol = false; // 순찰
+    public bool isBattle = false; // 전투 
 
     private void Awake()
     {
@@ -135,6 +135,7 @@ public class Enemy : MonoBehaviour
     {
         m_target = null;
         isBattle = false;
+        m_TargetPlayer.SetDestination(m_tWayPoints[m_count].position);
         InvokeRepeating("MoveToNextWayPoint", 0f, 2f); // 0초후, 1.5초마다 실행
         Debug.Log("patrol");    
 
@@ -147,11 +148,12 @@ public class Enemy : MonoBehaviour
             isPatrol = true;
             m_TargetPlayer.speed = m_bossPatrolSpeed;
 
+
             // 도착 했다면 가만히 서 있는다
             if (m_TargetPlayer.velocity.sqrMagnitude >= 0.2f * 0.2f && m_TargetPlayer.remainingDistance <= 0.5f)
             {
                 animator.SetInteger("AniState", (int)AniState.IdleCombat);
-                Debug.LogWarning("����");
+                //Debug.LogWarning("도착");
             }
 
             //도착한다면 다음 waypoint로 넘어간다
@@ -172,7 +174,9 @@ public class Enemy : MonoBehaviour
             else
             {
                 // 다음 목적지로 향하게 이동 한다
+                //m_TargetPlayer.SetDestination(m_tWayPoints[m_count].position);
                 animator.SetInteger("AniState", (int)AniState.Walk);
+
             }
         }
     }
@@ -252,16 +256,15 @@ public class Enemy : MonoBehaviour
 
     IEnumerator OnDamage()
     {
-        int ranDamage = Random.Range(100, 500);
+        //int ranDamage = Random.Range(100, 500);
+        int ranDamage = 300;
         m_cam = Camera.main;
         c_DamageUI = DamageUI.GetComponentInChildren<DamageText>();
         c_DamageUI.m_text.text = ranDamage.ToString();
-        c_DamageUI.m_text.transform.position = m_cam.WorldToScreenPoint(headPos.transform.position);
-
-        Instantiate(DamageUI);
-
-        GameObject obj = Instantiate(DamageUI);
-        obj.transform.SetParent(transform.Find("head"), false);
+   
+        // 위치를 정해주고, 특정 오브젝트 자식으로 생성한 후, 위치값을 초기화
+        GameObject obj = Instantiate(DamageUI, Vector3.zero, Quaternion.identity);
+        obj.transform.SetParent(transform.Find("DamageUiPos"), false);
        
         curHealth -= ranDamage;
 
