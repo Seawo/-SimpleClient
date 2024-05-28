@@ -290,6 +290,7 @@ public class Enemy : MonoBehaviour
     IEnumerator Die()
     {
         isDead = true;
+        isBattle = false;
         bossCollider.enabled = false;
         meshRenderer.material.color = Color.black;
         StartCoroutine(SetAnimationState(AniState.Death));
